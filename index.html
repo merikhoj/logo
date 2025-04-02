@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Simple LOGO Interpreter in JavaScript</title>
+<style>
+  body {
+    font-family: sans-serif;
+    display: flex;
+    height: 100vh; /* Make body take full viewport height */
+    margin: 0;
+    overflow: hidden; /* Prevent scrollbars */
+    background-color: black; /* Default black background */
+    color: white; /* Default white text */
+    font-size: 1em; /* Double default font size */
+    transition: font-size 0.2s ease-in-out; /* Smooth transition for font size changes */
+  }
+
+  #mainContent {
+    flex-grow: 1; /* Allow main content to take remaining space */
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    overflow: auto; /* Enable scrolling within main content if needed */
+  }
+
+  #logoCanvas {
+    border: 1px solid white; /* White border for canvas */
+    width: 100%; /* Make canvas responsive within its container */
+    /*height: 400px; /* Default height of input window */
+    box-sizing: border-box; /* Include padding and border in element's total width and height */
+    margin-bottom: 10px;
+  }
+
+  #controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 60px; /* Add space for the settings button at the bottom */
+  }
+
+  #commands {
+    width: 100%;
+    height: 300px; /* Default height of input window */
+    box-sizing: border-box;
+    background-color: #333; /* Dark background for input */
+    color: white;
+    font-size: 2em; /* Inherit doubled size, but make it readable */
+  }
+
+  #commandLookup {
+    width: 400px; /* Adjust as needed */
+    background-color: #222;
+    border-left: 1px solid #555;
+    padding: 15px;
+    overflow-y: auto;
+    box-sizing: border-box;
+    font-size: 1.2em; /* Double default font size */
+  }
+
+  #commandLookup h2 {
+    margin-top: 0;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+  }
+
+  #commandLookup table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #commandLookup th, #commandLookup td {
+    border-bottom: 1px solid #555;
+    padding: 8px 5px;
+    text-align: left;
+    font-size: 0.9em;
+  }
+
+  #commandLookup th {
+    font-weight: bold;
+  }
+
+  .example {
+    font-style: italic;
+    color: #ccc;
+  }
+
+  #settingsButton {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    padding: 10px 15px;
+    font-size: 1em; /* Adjust settings button font size */
+    background-color: #555;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px; /* Optional: round the corners */
+  }
+
+  #settingsMenu {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: #333;
+    color: white;
+    padding: 20px;
+    border: 1px solid #555;
+    z-index: 10;
+    display: none; /* Hidden by default */
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #settingsMenu label {
+    font-size: 0.9em;
+  }
+
+  #settingsMenu input[type="color"],
+  #settingsMenu input[type="number"] {
+    width: 80px;
+    padding: 5px;
+    font-size: 0.8em;
+    background-color: #444;
+    color: white;
+    border: 1px solid #555;
+  }
+
+  #settingsMenu button {
+    padding: 8px 12px;
+    font-size: 0.8em;
+    background-color: #555;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+</style>
+</head>
+<body>
+
+<div id="mainContent">
+  <h1>Simple LOGO Interpreter</h1>
+
+  <canvas id="logoCanvas"></canvas><br><br>
+
+  <div id="controls">
+    <label for="commands">Enter LOGO commands:</label>
+    <textarea id="commands">
+FD 100
+RT 90
+FD 100
+RT 90
+FD 100
+RT 90
+FD 100
+</textarea>
+    <button onclick="runLogo()">Run</button>
+    <button id="settingsButton" onclick="toggleSettings()">⚙</button>
+  </div>
+</div>
+
+<div id="commandLookup">
+  <h2>LOGO Commands</h2>
+  <table>
+    <thead>
+      <tr>
+        <th>Command</th>
+        <th>Description</th>
+        <th>Example</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>FD &lt;distance&gt;</code></td>
+        <td>Moves the turtle forward.</td>
+        <td><code>FD 50</code></td>
+      </tr>
+      <tr>
+        <td><code>BK &lt;distance&gt;</code></td>
+        <td>Moves the turtle backward.</td>
+        <td><code>BK 25</code></td>
+      </tr>
+      <tr>
+        <td><code>LT &lt;angle&gt;</code></td>
+        <td>Turns the turtle left.</td>
+        <td><code>LT 90</code></td>
+      </tr>
+      <tr>
+        <td><code>RT &lt;angle&gt;</code></td>
+        <td>Turns the turtle right.</td>
+        <td><code>RT 45</code></td>
+      </tr>
+      <tr>
+        <td><code>PU</code></td>
+        <td>Lifts the pen (no drawing).</td>
+        <td><code>PU</code></td>
+      </tr>
+      <tr>
+        <td><code>PD</code></td>
+        <td>Puts the pen down (drawing).</td>
+        <td><code>PD</code></td>
+      </tr>
+      </tbody>
+  </table>
+</div>
+
+<div id="settingsMenu">
+  <label for="backgroundColor">Background Color:</label>
+  <input type="color" id="backgroundColor" value="#000000">
+
+  <label for="textColor">Text Color:</label>
+  <input type="color" id="textColor" value="#ffffff">
+
+  <label for="textSize">Text Size (em):</label>
+  <input type="number" id="textSize" value="2" min="1" step="0.1" onchange="adjustLayout()">
+
+  <button onclick="applySettings()">Apply Settings</button>
+</div>
+
+<script>
+  const body = document.body;
+  const mainContent = document.getElementById('mainContent');
+  const canvas = document.getElementById('logoCanvas');
+  const commandsInput = document.getElementById('commands');
+  const ctx = canvas.getContext('2d');
+  const settingsButton = document.getElementById('settingsButton');
+  const settingsMenu = document.getElementById('settingsMenu');
+  const backgroundColorInput = document.getElementById('backgroundColor');
+  const textColorInput = document.getElementById('textColor');
+  const textSizeInput = document.getElementById('textSize');
+  const commandLookup = document.getElementById('commandLookup');
+
+  let turtleX = 0;
+  let turtleY = 0;
+  let turtleAngle = 0; // Degrees, 0 is facing right
+  let penDown = true;
+
+  function resizeCanvas() {
+    const inputHeight = commandsInput.offsetHeight;
+    canvas.height = inputHeight * 2;
+    canvas.width = canvas.offsetWidth; // Keep width responsive
+    ctx.strokeStyle = body.style.color || 'white'; // Ensure drawing color matches text color
+    resetTurtle(); // Redraw on resize
+  }
+
+  function resetTurtle() {
+    turtleX = canvas.width / 2;
+    turtleY = canvas.height / 2;
+    turtleAngle = 0;
+    penDown = true;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+  }
+
+  function forward(distance) {
+    const rad = turtleAngle * Math.PI / 180;
+    const newX = turtleX + distance * Math.cos(rad);
+    const newY = turtleY - distance * Math.sin(rad); // Y-axis is flipped in canvas
+
+    if (penDown) {
+      ctx.beginPath();
+      ctx.moveTo(turtleX, turtleY);
+      ctx.lineTo(newX, newY);
+      ctx.stroke();
+    }
+    turtleX = newX;
+    turtleY = newY;
+  }
+
+  function backward(distance) {
+    forward(-distance);
+  }
+
+  function left(angle) {
+    turtleAngle += angle;
+  }
+
+  function right(angle) {
+    turtleAngle -= angle;
+  }
+
+  function penup() {
+    penDown = false;
+  }
+
+  function pendown() {
+    penDown = true;
+  }
+
+  function runLogo() {
+    resetTurtle();
+    const commandsText = document.getElementById('commands').value.toUpperCase();
+    const commandList = commandsText.trim().split('\n');
+
+    ctx.strokeStyle = body.style.color || 'white'; // Set drawing color based on text color
+
+    for (const command of commandList) {
+      const parts = command.split(' ');
+      const instruction = parts[0];
+      const value = parseFloat(parts[1]);
+
+      switch (instruction) {
+        case 'FD':
+          forward(value);
+          break;
+        case 'BK':
+          backward(value);
+          break;
+        case 'LT':
+          left(value);
+          break;
+        case 'RT':
+          right(value);
+          break;
+        case 'PU':
+          penup();
+          break;
+        case 'PD':
+          pendown();
+          break;
+        // You can add more commands here like 'CS' (clear screen), 'HOME', etc.
+      }
+    }
+  }
+
+  function toggleSettings() {
+    settingsMenu.style.display = settingsMenu.style.display === 'none' ? 'flex' : 'none';
+  }
+
+  function applySettings() {
+    body.style.backgroundColor = backgroundColorInput.value;
+    body.style.color = textColorInput.value;
+    body.style.fontSize = textSizeInput.value + 'em';
+
+    // Update text color in other elements if needed
+    commandsInput.style.color = textColorInput.value;
+    commandLookup.style.color = textColorInput.value;
+
+    // Update canvas border color
+    canvas.style.borderColor = textColorInput.value;
+
+    // Redraw canvas to update drawing color and size if input height changed
+    adjustLayout();
+
+    toggleSettings(); // Close the settings menu after applying
+  }
+
+  function adjustLayout() {
+    resizeCanvas();
+    // You might need more complex logic here to adjust other elements
+    // based on the font size to prevent scrolling.
+    // For this simple example, re-running resizeCanvas might be sufficient
+    // if the input height changes with font size.
+  }
+
+  // Initialize canvas size and redraw on window resize
+  window.addEventListener('resize', adjustLayout);
+  adjustLayout(); // Call on initial load
+
+  // Set initial values for color pickers
+  backgroundColorInput.value = '#000000';
+  textColorInput.value = '#ffffff';
+</script>
+
+</body>
+</html>
