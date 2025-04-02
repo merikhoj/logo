@@ -84,6 +84,18 @@
     color: #ccc;
   }
 
+  #runButton {
+    width: 150px; /* Set a specific width */
+    height: 50px; /* Set a specific height */
+    padding: 10px 15px;
+    font-size: 1.5em; /* Adjust settings button font size */
+    background-color: #555;
+    color: white;
+    border: none;
+    cursor: pointer;
+    border-radius: 5px; /* Optional: round the corners */
+  }
+
   #settingsButton {
     position: fixed;
     bottom: 20px;
@@ -154,7 +166,7 @@ FD 100
 RT 90
 FD 100
 </textarea>
-    <button onclick="runLogo()">Run</button>
+    <button id="runButton" onclick="runLogo()">Run</button>
     <button id="settingsButton" onclick="toggleSettings()">⚙</button>
   </div>
 </div>
@@ -223,6 +235,7 @@ FD 100
   const canvas = document.getElementById('logoCanvas');
   const commandsInput = document.getElementById('commands');
   const ctx = canvas.getContext('2d');
+  const runButton = document.getElementById('runButton');
   const settingsButton = document.getElementById('settingsButton');
   const settingsMenu = document.getElementById('settingsMenu');
   const backgroundColorInput = document.getElementById('backgroundColor');
